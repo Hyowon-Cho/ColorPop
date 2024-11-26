@@ -1,5 +1,9 @@
 # ColorPop 
 
+## Tech Stack
+- Flutter
+- Dart
+
 
 https://github.com/user-attachments/assets/710b4580-e12c-4a2e-92ae-a7a15830e030
 
@@ -18,11 +22,11 @@ https://github.com/user-attachments/assets/710b4580-e12c-4a2e-92ae-a7a15830e030
 1. Set up your Flutter development environment
 2. Clone this repository:
 ```bash
-git clone https://github.com/yourusername/flutter_color_pop.git
+git clone https://github.com/Hyowon-Cho/ColorPop.git
 ```
 3. Navigate to the project directory:
 ```bash
-cd flutter_color_pop
+cd ColorPop
 ```
 4. Install dependencies:
 ```bash
@@ -40,11 +44,6 @@ flutter run
 3. Earn points based on the number of removed blocks
 4. Press the Reset button at the top to restart the game
 
-## Tech Stack
-
-- Flutter
-- Dart
-
 ## License
 
-MIT License
+- MIT License
