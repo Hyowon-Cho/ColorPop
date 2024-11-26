@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
+import 'dart:async';
 
 void main() {
   runApp(const MaterialApp(home: ColorPopGame()));
@@ -17,6 +18,9 @@ class _ColorPopGameState extends State<ColorPopGame> {
   static const int cols = 8;
   late List<List<Color>> board;
   int score = 0;
+  int remainingTime = 60;
+  Timer? gameTimer;       
+  bool isGameOver = false;
   final List<Color> colors = [
     Colors.red,
     Colors.blue,
@@ -29,6 +33,7 @@ class _ColorPopGameState extends State<ColorPopGame> {
   void initState() {
     super.initState();
     initializeBoard();
+    startTimer();
   }
 
   void initializeBoard() {
@@ -102,12 +107,82 @@ class _ColorPopGameState extends State<ColorPopGame> {
       }
     });
   }
+  void startTimer() {
+    gameTimer?.cancel();
+    gameTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      setState(() {
+        if (remainingTime > 0) {
+          remainingTime--;
+        } else {
+          gameOver();
+        }
+      });
+    });
+  }
+  
+
+
+  void gameOver() {
+    gameTimer?.cancel();
+    setState(() {
+      isGameOver = true;
+    });
+    showGameOverDialog();
+  }
+
+
+void showGameOverDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('Game Over!'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Time\'s up!'),
+            const SizedBox(height: 8),
+            Text('Final Score: $score'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              resetGame();
+            },
+            child: const Text('Play Again'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void resetGame() {
+    setState(() {
+      score = 0;
+      remainingTime = 60;
+      isGameOver = false;
+      initializeBoard();
+      startTimer();
+    });
+  }
+
+  @override
+  void dispose() {
+    gameTimer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Color Pop Game - Score: $score'),
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [ 
+            Text('Time: ${remainingTime}s'), Text('ColorPop Score: $score'),
+          ],
+        ),
       ),
       body: Center(
         child: Column(
@@ -119,10 +194,12 @@ class _ColorPopGameState extends State<ColorPopGame> {
                 children: [
                   for (int j = 0; j < cols; j++)
                     GestureDetector(
-                      onTap: () {
+                      onTap: isGameOver
+                        ? null
+                        : () {
                         var blocks = findConnectedBlocks(i, j, board[i][j]);
                         popBlocks(blocks);
-                      },
+                        },
                       child: Container(
                         width: 40,
                         height: 40,
@@ -137,12 +214,7 @@ class _ColorPopGameState extends State<ColorPopGame> {
               ),
             const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  score = 0;
-                  initializeBoard();
-                });
-              },
+              onPressed: resetGame,
               child: const Text('Reset Game'),
             ),
           ],
