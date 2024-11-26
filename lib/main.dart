@@ -21,6 +21,11 @@ class _ColorPopGameState extends State<ColorPopGame> {
   int remainingTime = 60;
   Timer? gameTimer;       
   bool isGameOver = false;
+  int comboCount = 0;
+  Timer? comboTimer;
+  static const int comboTimeLimit = 5;
+  int comboTimeRemaining = comboTimeLimit;
+
   final List<Color> colors = [
     Colors.red,
     Colors.blue,
