@@ -2,6 +2,10 @@
 
 A color pop puzzle game where you connect and remove blocks of the same color.
 
+
+https://github.com/user-attachments/assets/710b4580-e12c-4a2e-92ae-a7a15830e030
+
+
 ## Features
 
 - 8x8 game board
