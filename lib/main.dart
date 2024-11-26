@@ -82,20 +82,23 @@ class _ColorPopGameState extends State<ColorPopGame> {
   }
 
   void popBlocks(List<List<int>> blocks) {
-    if (blocks.length < 2) return; // Need at least 2 connected blocks
+    if (blocks.length < 2) return;
 
     setState(() {
-      // Remove blocks
+      
       for (var block in blocks) {
         int row = block[0];
         int col = block[1];
         board[row][col] = Colors.transparent;
       }
 
-      // Update score
-      score += blocks.length * 10;
+      comboCount++;
+      startComboTimer();
 
-      // Make blocks fall
+      int baseScore = blocks.length * 10;
+      int comboBonus = (comboCount - 1) * 5;
+      score += baseScore + comboBonus;
+      
       for (int col = 0; col < cols; col++) {
         List<Color> column = [];
         for (int row = rows - 1; row >= 0; row--) {
