@@ -43,12 +43,12 @@ class _ColorPopGameState extends State<ColorPopGame> with TickerProviderStateMix
     super.initState();
     
     popAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 150),
       vsync: this,
     );
     
     fallAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 500),
+      duration: const Duration(milliseconds: 180),
       vsync: this,
     );
     
@@ -98,7 +98,7 @@ class _ColorPopGameState extends State<ColorPopGame> with TickerProviderStateMix
   void popBlocks(List<List<int>> blocks) {
     if (blocks.length < 2) return;
 
-    // 블록 터지는 애니메이션 설정
+    // Popping blocks
     for (var block in blocks) {
       final key = '${block[0]},${block[1]}';
       blockAnimations[key] = Tween<double>(
@@ -112,10 +112,9 @@ class _ColorPopGameState extends State<ColorPopGame> with TickerProviderStateMix
       );
     }
 
-    // 애니메이션 시작
+    // Starting animation
     popAnimationController.forward(from: 0).then((_) {
       setState(() {
-        // 블록 제거
         for (var block in blocks) {
           int row = block[0];
           int col = block[1];
@@ -129,36 +128,30 @@ class _ColorPopGameState extends State<ColorPopGame> with TickerProviderStateMix
         int comboBonus = (comboCount - 1) * 5;
         score += baseScore + comboBonus;
 
-        // 중력 효과 애니메이션 적용
         _applyGravityWithAnimation();
       });
     });
   }
 
     void _applyGravityWithAnimation() {
-    // 기존 보드를 복사하여 새 보드 생성
     List<List<Color>> newBoard = List.generate(
       rows,
       (i) => List.generate(cols, (j) => board[i][j]),  // 기존 보드의 상태를 복사
     );
 
-    // 각 열에 대해 처리
     for (int col = 0; col < cols; col++) {
       List<Color> column = [];
       
-      // 남아있는 블록들 수집
       for (int row = rows - 1; row >= 0; row--) {
         if (board[row][col] != Colors.transparent) {
           column.add(board[row][col]);
         }
       }
       
-      // 빈 공간 채우기
       while (column.length < rows) {
         column.add(colors[Random().nextInt(colors.length)]);
       }
 
-      // 블록 재배치
       int newRow = rows - 1;
       for (Color color in column) {
         final key = '$newRow,$col';
@@ -178,7 +171,6 @@ class _ColorPopGameState extends State<ColorPopGame> with TickerProviderStateMix
       }
     }
 
-    // 애니메이션 시작
     fallAnimationController.forward(from: 0).then((_) {
       setState(() {
         board = newBoard;
