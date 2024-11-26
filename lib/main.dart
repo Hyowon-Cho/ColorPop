@@ -112,6 +112,32 @@ class _ColorPopGameState extends State<ColorPopGame> {
       }
     });
   }
+
+  void startComboTimer() {
+    comboTimer?.cancel();
+    comboTimeRemaining = comboTimeLimit;
+    
+    comboTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      setState(() {
+        if (comboTimeRemaining > 0) {
+          comboTimeRemaining--;
+        } else {
+          resetCombo();
+        }
+      });
+    });
+  }
+
+
+  void resetCombo() {
+    setState(() {
+      comboCount = 0;
+      comboTimeRemaining = comboTimeLimit;
+      comboTimer?.cancel();
+    });
+  }
+
+
   void startTimer() {
     gameTimer?.cancel();
     gameTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
