@@ -98,7 +98,7 @@ class _ColorPopGameState extends State<ColorPopGame> {
       int baseScore = blocks.length * 10;
       int comboBonus = (comboCount - 1) * 5;
       score += baseScore + comboBonus;
-      
+
       for (int col = 0; col < cols; col++) {
         List<Color> column = [];
         for (int row = rows - 1; row >= 0; row--) {
@@ -197,6 +197,7 @@ void showGameOverDialog() {
       score = 0;
       remainingTime = 60;
       isGameOver = false;
+      resetCombo();
       initializeBoard();
       startTimer();
     });
