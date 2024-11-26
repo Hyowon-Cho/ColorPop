@@ -33,6 +33,8 @@ class _ColorPopGameState extends State<ColorPopGame> {
     Colors.yellow,
     Colors.purple,
   ];
+  
+  
 
   @override
   void initState() {
@@ -51,6 +53,7 @@ class _ColorPopGameState extends State<ColorPopGame> {
       ),
     );
   }
+  
 
   bool isValidPosition(int row, int col) {
     return row >= 0 && row < rows && col >= 0 && col < cols;
@@ -206,7 +209,43 @@ void showGameOverDialog() {
   @override
   void dispose() {
     gameTimer?.cancel();
+    comboTimer?.cancel();
     super.dispose();
+  }
+
+
+  Widget buildComboDisplay() {
+    if (comboCount <= 1) return const SizedBox.shrink();
+    
+    return Container(
+      padding: const EdgeInsets.all(8),
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Colors.purple.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'COMBO x$comboCount',
+            style: TextStyle(
+              color: Colors.purple,
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            '$comboTimeRemaining',
+            style: TextStyle(
+              color: Colors.purple.withOpacity(0.8),
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -214,8 +253,11 @@ void showGameOverDialog() {
     return Scaffold(
       appBar: AppBar(
         title: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [ 
-            Text('Time: ${remainingTime}s'), Text('ColorPop Score: $score'),
+          mainAxisAlignment: MainAxisAlignment.spaceBetween, 
+          children: [ 
+            Text('Time: ${remainingTime}s'), 
+            Text('Combo: $comboCount'),  
+            Text('Score: $score'),
           ],
         ),
       ),
@@ -223,6 +265,23 @@ void showGameOverDialog() {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            if (remainingTime <= 10)
+              Container(
+                padding: const EdgeInsets.all(8),
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: Colors.red.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  'Time is running out!',
+                  style: TextStyle(
+                    color: Colors.red,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            buildComboDisplay(),  
             for (int i = 0; i < rows; i++)
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
