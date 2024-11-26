@@ -28,9 +28,12 @@ class _ColorPopGameState extends State<ColorPopGame> with TickerProviderStateMix
 
   final List<Color> colors = [
     Colors.red,
+    Colors.cyan,
+    Colors.orange,
     Colors.blue,
     Colors.green,
     Colors.yellow,
+    Colors.deepPurple,
     Colors.purple,
   ];
   
@@ -136,7 +139,7 @@ class _ColorPopGameState extends State<ColorPopGame> with TickerProviderStateMix
     void _applyGravityWithAnimation() {
     List<List<Color>> newBoard = List.generate(
       rows,
-      (i) => List.generate(cols, (j) => board[i][j]),  // 기존 보드의 상태를 복사
+      (i) => List.generate(cols, (j) => board[i][j]),
     );
 
     for (int col = 0; col < cols; col++) {
@@ -350,7 +353,7 @@ Widget build(BuildContext context) {
                             var blocks = findConnectedBlocks(i, j, board[i][j]);
                             popBlocks(blocks);
                           },
-                    child: AnimatedBuilder(  // 여기가 중요한 부분입니다
+                    child: AnimatedBuilder(  
                       animation: Listenable.merge([
                         popAnimationController,
                         fallAnimationController,
@@ -361,7 +364,7 @@ Widget build(BuildContext context) {
                         final fallOffset = blockAnimations[key]?.value ?? 0.0;
 
                         return Transform.translate(
-                          offset: Offset(0, fallOffset * 40),  // 40은 블록의 높이
+                          offset: Offset(0, fallOffset * 40),  
                           child: Transform.scale(
                             scale: popScale,
                             child: Container(
