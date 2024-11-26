@@ -13,7 +13,7 @@ class ColorPopGame extends StatefulWidget {
   State<ColorPopGame> createState() => _ColorPopGameState();
 }
 
-class _ColorPopGameState extends State<ColorPopGame> {
+class _ColorPopGameState extends State<ColorPopGame> with TickerProviderStateMixin {
   static const int rows = 8;
   static const int cols = 8;
   late List<List<Color>> board;
@@ -34,11 +34,24 @@ class _ColorPopGameState extends State<ColorPopGame> {
     Colors.purple,
   ];
   
-  
+  late AnimationController popAnimationController;
+  late AnimationController fallAnimationController;
+  Map<String, Animation<double>> blockAnimations = {};
 
   @override
   void initState() {
     super.initState();
+    
+    popAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    
+    fallAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 500),
+      vsync: this,
+    );
+    
     initializeBoard();
     startTimer();
   }
@@ -53,7 +66,6 @@ class _ColorPopGameState extends State<ColorPopGame> {
       ),
     );
   }
-  
 
   bool isValidPosition(int row, int col) {
     return row >= 0 && row < rows && col >= 0 && col < cols;
@@ -73,7 +85,6 @@ class _ColorPopGameState extends State<ColorPopGame> {
       visited.add('$r,$c');
       connected.add([r, c]);
 
-      // Check all 4 directions
       dfs(r - 1, c); // up
       dfs(r + 1, c); // down
       dfs(r, c - 1); // left
@@ -87,35 +98,92 @@ class _ColorPopGameState extends State<ColorPopGame> {
   void popBlocks(List<List<int>> blocks) {
     if (blocks.length < 2) return;
 
-    setState(() {
+    // 블록 터지는 애니메이션 설정
+    for (var block in blocks) {
+      final key = '${block[0]},${block[1]}';
+      blockAnimations[key] = Tween<double>(
+        begin: 1.0,
+        end: 0.0,
+      ).animate(
+        CurvedAnimation(
+          parent: popAnimationController,
+          curve: Curves.easeOut,
+        ),
+      );
+    }
+
+    // 애니메이션 시작
+    popAnimationController.forward(from: 0).then((_) {
+      setState(() {
+        // 블록 제거
+        for (var block in blocks) {
+          int row = block[0];
+          int col = block[1];
+          board[row][col] = Colors.transparent;
+        }
+
+        comboCount++;
+        startComboTimer();
+
+        int baseScore = blocks.length * 10;
+        int comboBonus = (comboCount - 1) * 5;
+        score += baseScore + comboBonus;
+
+        // 중력 효과 애니메이션 적용
+        _applyGravityWithAnimation();
+      });
+    });
+  }
+
+    void _applyGravityWithAnimation() {
+    // 기존 보드를 복사하여 새 보드 생성
+    List<List<Color>> newBoard = List.generate(
+      rows,
+      (i) => List.generate(cols, (j) => board[i][j]),  // 기존 보드의 상태를 복사
+    );
+
+    // 각 열에 대해 처리
+    for (int col = 0; col < cols; col++) {
+      List<Color> column = [];
       
-      for (var block in blocks) {
-        int row = block[0];
-        int col = block[1];
-        board[row][col] = Colors.transparent;
-      }
-
-      comboCount++;
-      startComboTimer();
-
-      int baseScore = blocks.length * 10;
-      int comboBonus = (comboCount - 1) * 5;
-      score += baseScore + comboBonus;
-
-      for (int col = 0; col < cols; col++) {
-        List<Color> column = [];
-        for (int row = rows - 1; row >= 0; row--) {
-          if (board[row][col] != Colors.transparent) {
-            column.add(board[row][col]);
-          }
-        }
-        while (column.length < rows) {
-          column.add(colors[Random().nextInt(colors.length)]);
-        }
-        for (int row = 0; row < rows; row++) {
-          board[row][col] = column[rows - 1 - row];
+      // 남아있는 블록들 수집
+      for (int row = rows - 1; row >= 0; row--) {
+        if (board[row][col] != Colors.transparent) {
+          column.add(board[row][col]);
         }
       }
+      
+      // 빈 공간 채우기
+      while (column.length < rows) {
+        column.add(colors[Random().nextInt(colors.length)]);
+      }
+
+      // 블록 재배치
+      int newRow = rows - 1;
+      for (Color color in column) {
+        final key = '$newRow,$col';
+        if (board[newRow][col] == Colors.transparent) {
+          blockAnimations[key] = Tween<double>(
+            begin: -1.0,
+            end: 0.0,
+          ).animate(
+            CurvedAnimation(
+              parent: fallAnimationController,
+              curve: Curves.bounceOut,
+            ),
+          );
+        }
+        newBoard[newRow][col] = color;
+        newRow--;
+      }
+    }
+
+    // 애니메이션 시작
+    fallAnimationController.forward(from: 0).then((_) {
+      setState(() {
+        board = newBoard;
+        blockAnimations.clear();
+      });
     });
   }
 
@@ -134,7 +202,6 @@ class _ColorPopGameState extends State<ColorPopGame> {
     });
   }
 
-
   void resetCombo() {
     setState(() {
       comboCount = 0;
@@ -142,7 +209,6 @@ class _ColorPopGameState extends State<ColorPopGame> {
       comboTimer?.cancel();
     });
   }
-
 
   void startTimer() {
     gameTimer?.cancel();
@@ -156,8 +222,6 @@ class _ColorPopGameState extends State<ColorPopGame> {
       });
     });
   }
-  
-
 
   void gameOver() {
     gameTimer?.cancel();
@@ -167,8 +231,7 @@ class _ColorPopGameState extends State<ColorPopGame> {
     showGameOverDialog();
   }
 
-
-void showGameOverDialog() {
+  void showGameOverDialog() {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -210,9 +273,10 @@ void showGameOverDialog() {
   void dispose() {
     gameTimer?.cancel();
     comboTimer?.cancel();
+    popAnimationController.dispose();
+    fallAnimationController.dispose();
     super.dispose();
   }
-
 
   Widget buildComboDisplay() {
     if (comboCount <= 1) return const SizedBox.shrink();
@@ -246,74 +310,91 @@ void showGameOverDialog() {
         ],
       ),
     );
-  }
+    }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween, 
-          children: [ 
-            Text('Time: ${remainingTime}s'), 
-            Text('Combo: $comboCount'),  
-            Text('Score: $score'),
-          ],
-        ),
+@override
+Widget build(BuildContext context) {
+  return Scaffold(
+    appBar: AppBar(
+      title: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text('Time: ${remainingTime}s'),
+          Text('Combo: $comboCount'),
+          Text('Score: $score'),
+        ],
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            if (remainingTime <= 10)
-              Container(
-                padding: const EdgeInsets.all(8),
-                margin: const EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  'Time is running out!',
-                  style: TextStyle(
-                    color: Colors.red,
-                    fontWeight: FontWeight.bold,
-                  ),
+    ),
+    body: Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          if (remainingTime <= 10)
+            Container(
+              padding: const EdgeInsets.all(8),
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                color: Colors.red.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                'Time is running out!',
+                style: TextStyle(
+                  color: Colors.red,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-            buildComboDisplay(),  
-            for (int i = 0; i < rows; i++)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  for (int j = 0; j < cols; j++)
-                    GestureDetector(
-                      onTap: isGameOver
+            ),
+          buildComboDisplay(),
+          for (int i = 0; i < rows; i++)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                for (int j = 0; j < cols; j++)
+                  GestureDetector(
+                    onTap: isGameOver
                         ? null
                         : () {
-                        var blocks = findConnectedBlocks(i, j, board[i][j]);
-                        popBlocks(blocks);
-                        },
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        margin: const EdgeInsets.all(1),
-                        decoration: BoxDecoration(
-                          color: board[i][j],
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
+                            var blocks = findConnectedBlocks(i, j, board[i][j]);
+                            popBlocks(blocks);
+                          },
+                    child: AnimatedBuilder(  // 여기가 중요한 부분입니다
+                      animation: Listenable.merge([
+                        popAnimationController,
+                        fallAnimationController,
+                      ]),
+                      builder: (context, child) {
+                        final key = '$i,$j';
+                        final popScale = blockAnimations[key]?.value ?? 1.0;
+                        final fallOffset = blockAnimations[key]?.value ?? 0.0;
+
+                        return Transform.translate(
+                          offset: Offset(0, fallOffset * 40),  // 40은 블록의 높이
+                          child: Transform.scale(
+                            scale: popScale,
+                            child: Container(
+                              width: 40,
+                              height: 40,
+                              margin: const EdgeInsets.all(1),
+                              decoration: BoxDecoration(
+                                color: board[i][j],
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
                     ),
-                ],
-              ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: resetGame,
-              child: const Text('Reset Game'),
+                  ),
+              ],
             ),
-          ],
-        ),
+          const SizedBox(height: 20),
+          ElevatedButton(
+            onPressed: resetGame,
+            child: const Text('Reset Game'),
+          ),
+        ],
       ),
-    );
-  }
-}
+    ),
+  );
+}}
