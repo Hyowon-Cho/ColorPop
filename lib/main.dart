@@ -482,11 +482,50 @@ Widget build(BuildContext context) {
                   children: [
                     Text(
                       'Current Settings:',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 24,  // 제목 크기 증가
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                    SizedBox(height: 8),
-                    Text('Time Limit: ${difficultySettings[currentDifficulty]!['time']}s'),
-                    Text('Colors: ${difficultySettings[currentDifficulty]!['colors']}'),
+                    SizedBox(height: 16),  // 간격 증가
+                    // 게임 모드 정보
+                    Text(
+                      'Mode: ${currentMode.toString().split('.').last}',
+                      style: TextStyle(fontSize: 20),  // 폰트 크기 증가
+                    ),
+                    Text(
+                      '${gameModeSettings[currentMode]!['description']}',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                    SizedBox(height: 16),  // 간격 증가
+                    // 난이도 정보
+                    Text(
+                      'Difficulty: ${currentDifficulty.toString().split('.').last}',
+                      style: TextStyle(fontSize: 20),
+                    ),
+                    // 모드별 상세 정보
+                    if (currentMode == GameMode.TIME_ATTACK)
+                      Text(
+                        'Time Limit: ${difficultySettings[currentDifficulty]!['time']}s',
+                        style: TextStyle(fontSize: 18),
+                      )
+                    else if (currentMode == GameMode.PUZZLE)
+                      Text(
+                        'Moves Limit: ${difficultySettings[currentDifficulty]!['moves']}',
+                        style: TextStyle(fontSize: 18),
+                      )
+                    else if (currentMode == GameMode.INFINITE)
+                      Text(
+                        'Score Multiplier: x${difficultySettings[currentDifficulty]!['scoreMultiplier']}',
+                        style: TextStyle(fontSize: 18),
+                      ),
+                    Text(
+                      'Colors: ${difficultySettings[currentDifficulty]!['colors']}',
+                      style: TextStyle(fontSize: 18),
+                    ),
                   ],
                 ),
               ),
