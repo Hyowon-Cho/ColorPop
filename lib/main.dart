@@ -499,7 +499,7 @@ Widget build(BuildContext context) {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          if (remainingTime <= 10)
+          if (remainingTime <= 10 && currentMode == GameMode.TIME_ATTACK)
             Container(
               padding: const EdgeInsets.all(8),
               margin: const EdgeInsets.only(bottom: 16),
