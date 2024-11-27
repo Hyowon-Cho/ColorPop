@@ -13,6 +13,21 @@ class ColorPopGame extends StatefulWidget {
   State<ColorPopGame> createState() => _ColorPopGameState();
 }
 
+enum GameMode {
+  TIME_ATTACK,
+  PUZZLE,
+  INFINITE
+}
+
+
+enum Difficulty {
+  EASY,    
+  NORMAL,  
+  HARD
+}
+
+
+
 class _ColorPopGameState extends State<ColorPopGame> with TickerProviderStateMixin {
   static const int rows = 8;
   static const int cols = 8;
@@ -25,18 +40,60 @@ class _ColorPopGameState extends State<ColorPopGame> with TickerProviderStateMix
   Timer? comboTimer;
   static const int comboTimeLimit = 5;
   int comboTimeRemaining = comboTimeLimit;
+  int movesLeft = 30;  
 
-  final List<Color> colors = [
+  GameMode currentMode = GameMode.TIME_ATTACK;
+  Difficulty currentDifficulty = Difficulty.NORMAL;
+  
+  Map<Difficulty, Map<String, dynamic>> difficultySettings = {
+    Difficulty.EASY: {
+      'time': 90,
+      'colors': 4,
+      'moves': 40,  // Puzzle
+      'scoreMultiplier': 1.5,  // infinite
+    },
+    Difficulty.NORMAL: {
+      'time': 60,
+      'colors': 5,
+      'moves': 30,
+      'scoreMultiplier': 1.0,
+    },
+    Difficulty.HARD: {
+      'time': 45,
+      'colors': 6,
+      'moves': 20,
+      'scoreMultiplier': 0.8,
+    },
+  };
+
+  Map<GameMode, Map<String, dynamic>> gameModeSettings = {
+    GameMode.TIME_ATTACK: {
+      'hasTimeLimit': true,
+      'description': 'Clear blocks before time runs out',
+      'useTimer': true,
+    },
+    GameMode.PUZZLE: {
+      'hasTimeLimit': false,
+      'description': 'Clear the board with limited moves',
+      'useMoves': true,
+    },
+    GameMode.INFINITE: {
+      'hasTimeLimit': false,
+      'description': 'Play endlessly with score multiplier',
+      'useScoreMultiplier': true,
+    },
+  };
+
+  final List<Color> defaultColors = [
     Colors.red,
-    Colors.cyan,
-    Colors.orange,
     Colors.blue,
     Colors.green,
     Colors.yellow,
-    Colors.deepPurple,
     Colors.purple,
+    Colors.orange,  
   ];
-  
+  late List<Color> colors;  
+
   late AnimationController popAnimationController;
   late AnimationController fallAnimationController;
   Map<String, Animation<double>> blockAnimations = {};
@@ -44,6 +101,7 @@ class _ColorPopGameState extends State<ColorPopGame> with TickerProviderStateMix
   @override
   void initState() {
     super.initState();
+    colors = defaultColors.take(difficultySettings[currentDifficulty]!['colors']).toList();
     
     popAnimationController = AnimationController(
       duration: const Duration(milliseconds: 150),
@@ -51,14 +109,13 @@ class _ColorPopGameState extends State<ColorPopGame> with TickerProviderStateMix
     );
     
     fallAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 180),
+      duration: const Duration(milliseconds: 150),
       vsync: this,
     );
     
     initializeBoard();
     startTimer();
   }
-
   void initializeBoard() {
     final random = Random();
     board = List.generate(
@@ -101,6 +158,11 @@ class _ColorPopGameState extends State<ColorPopGame> with TickerProviderStateMix
   void popBlocks(List<List<int>> blocks) {
     if (blocks.length < 2) return;
 
+    if (currentMode == GameMode.PUZZLE) {
+      if (movesLeft <= 0) return;  
+      movesLeft--;  
+    }
+
     // Popping blocks
     for (var block in blocks) {
       final key = '${block[0]},${block[1]}';
@@ -114,8 +176,7 @@ class _ColorPopGameState extends State<ColorPopGame> with TickerProviderStateMix
         ),
       );
     }
-
-    // Starting animation
+      // Starting animation
     popAnimationController.forward(from: 0).then((_) {
       setState(() {
         for (var block in blocks) {
@@ -256,11 +317,40 @@ class _ColorPopGameState extends State<ColorPopGame> with TickerProviderStateMix
   void resetGame() {
     setState(() {
       score = 0;
-      remainingTime = 60;
       isGameOver = false;
       resetCombo();
+      
+      switch (currentMode) {
+        case GameMode.TIME_ATTACK:
+          remainingTime = difficultySettings[currentDifficulty]!['time'];
+          startTimer();
+          break;
+        case GameMode.PUZZLE:
+          movesLeft = difficultySettings[currentDifficulty]!['moves'];
+          gameTimer?.cancel();
+          break;
+        case GameMode.INFINITE:
+          remainingTime = 0;  
+          gameTimer?.cancel();
+          break;
+      }
+      
+      colors = List.generate(
+        difficultySettings[currentDifficulty]!['colors'],
+        (index) => defaultColors[index],
+      );
+      
       initializeBoard();
-      startTimer();
+    });
+  }
+  void updateScore(int baseScore) {
+    setState(() {
+      if (currentMode == GameMode.INFINITE) {
+        double multiplier = difficultySettings[currentDifficulty]!['scoreMultiplier'];
+        score += (baseScore * multiplier).round();
+      } else {
+        score += baseScore;
+      }
     });
   }
 
@@ -314,10 +404,95 @@ Widget build(BuildContext context) {
       title: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text('Time: ${remainingTime}s'),
+          if (currentMode == GameMode.TIME_ATTACK)
+            Text('Time: ${remainingTime}s')
+          else if (currentMode == GameMode.PUZZLE)
+            Text('Moves: $movesLeft')
+          else
+            Text('Infinite Mode'),
           Text('Combo: $comboCount'),
           Text('Score: $score'),
         ],
+      ),
+    ),
+    endDrawer: Drawer(
+      child: SafeArea(
+        child: Column(
+          children: [
+            const Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Text(
+                'Setting',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            const Divider(),
+            ListTile(
+              title: const Text('Game Mode'),
+              subtitle: const Text('Select game mode'),
+              trailing: DropdownButton<GameMode>(
+                value: currentMode,
+                onChanged: (GameMode? newValue) {
+                  if (newValue != null) {
+                    setState(() {
+                      currentMode = newValue;
+                      resetGame();
+                    });
+                  }
+                },
+                items: GameMode.values.map((mode) {
+                  return DropdownMenuItem(
+                    value: mode,
+                    child: Text(mode.toString().split('.').last),
+                  );
+                }).toList(),
+              ),
+            ),
+            ListTile(
+              title: const Text('Difficulty'),
+              subtitle: const Text('Select difficulty level'),
+              trailing: DropdownButton<Difficulty>(
+                value: currentDifficulty,
+                onChanged: (Difficulty? newValue) {
+                  if (newValue != null) {
+                    setState(() {
+                      currentDifficulty = newValue;
+                      remainingTime = difficultySettings[newValue]!['time'];
+                      resetGame();
+                    });
+                  }
+                },
+                items: Difficulty.values.map((difficulty) {
+                  return DropdownMenuItem(
+                    value: difficulty,
+                    child: Text(difficulty.toString().split('.').last),
+                  );
+                }).toList(),
+              ),
+            ),
+            const Divider(),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Current Settings:',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    SizedBox(height: 8),
+                    Text('Time Limit: ${difficultySettings[currentDifficulty]!['time']}s'),
+                    Text('Colors: ${difficultySettings[currentDifficulty]!['colors']}'),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     ),
     body: Center(
@@ -353,7 +528,7 @@ Widget build(BuildContext context) {
                             var blocks = findConnectedBlocks(i, j, board[i][j]);
                             popBlocks(blocks);
                           },
-                    child: AnimatedBuilder(  
+                    child: AnimatedBuilder(
                       animation: Listenable.merge([
                         popAnimationController,
                         fallAnimationController,
@@ -364,7 +539,7 @@ Widget build(BuildContext context) {
                         final fallOffset = blockAnimations[key]?.value ?? 0.0;
 
                         return Transform.translate(
-                          offset: Offset(0, fallOffset * 40),  
+                          offset: Offset(0, fallOffset * 40),
                           child: Transform.scale(
                             scale: popScale,
                             child: Container(
