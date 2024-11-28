@@ -23,11 +23,11 @@ extension GameModeExtension on GameMode {
   String get displayName {
     switch (this) {
       case GameMode.TIME_ATTACK:
-        return 'Time Attack';
+        return 'TIME ATTACK';
       case GameMode.PUZZLE:
-        return 'Puzzle';
+        return 'PUZZLE';
       case GameMode.INFINITE:
-        return 'Infinite';
+        return 'INFINITE';
     }
   }
 }
@@ -37,19 +37,6 @@ enum Difficulty {
   EASY,    
   NORMAL,  
   HARD
-}
-
-extension DifficultyExtension on Difficulty {
-  String get displayName {
-    switch (this) {
-      case Difficulty.EASY:
-        return 'Easy';
-      case Difficulty.NORMAL:
-        return 'Normal';
-      case Difficulty.HARD:
-        return 'Infinite';
-    }
-  }
 }
 
 
