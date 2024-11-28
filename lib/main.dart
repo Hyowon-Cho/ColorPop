@@ -19,11 +19,37 @@ enum GameMode {
   INFINITE
 }
 
+extension GameModeExtension on GameMode {
+  String get displayName {
+    switch (this) {
+      case GameMode.TIME_ATTACK:
+        return 'Time Attack';
+      case GameMode.PUZZLE:
+        return 'Puzzle';
+      case GameMode.INFINITE:
+        return 'Infinite';
+    }
+  }
+}
+
 
 enum Difficulty {
   EASY,    
   NORMAL,  
   HARD
+}
+
+extension DifficultyExtension on Difficulty {
+  String get displayName {
+    switch (this) {
+      case Difficulty.EASY:
+        return 'Easy';
+      case Difficulty.NORMAL:
+        return 'Normal';
+      case Difficulty.HARD:
+        return 'Infinite';
+    }
+  }
 }
 
 
@@ -483,15 +509,15 @@ Widget build(BuildContext context) {
                     Text(
                       'Current Settings:',
                       style: TextStyle(
-                        fontSize: 24,  // 제목 크기 증가
+                        fontSize: 24,  
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    SizedBox(height: 16),  // 간격 증가
-                    // 게임 모드 정보
+                    SizedBox(height: 16), 
+                    
                     Text(
-                      'Mode: ${currentMode.toString().split('.').last}',
-                      style: TextStyle(fontSize: 20),  // 폰트 크기 증가
+                      'Mode: ${currentMode.displayName}',
+                      style: TextStyle(fontSize: 20),  
                     ),
                     Text(
                       '${gameModeSettings[currentMode]!['description']}',
@@ -500,13 +526,13 @@ Widget build(BuildContext context) {
                         color: Colors.grey[600],
                       ),
                     ),
-                    SizedBox(height: 16),  // 간격 증가
-                    // 난이도 정보
+                    SizedBox(height: 16),  
+                    
                     Text(
                       'Difficulty: ${currentDifficulty.toString().split('.').last}',
                       style: TextStyle(fontSize: 20),
                     ),
-                    // 모드별 상세 정보
+                    
                     if (currentMode == GameMode.TIME_ATTACK)
                       Text(
                         'Time Limit: ${difficultySettings[currentDifficulty]!['time']}s',
