@@ -23,11 +23,11 @@ extension GameModeExtension on GameMode {
   String get displayName {
     switch (this) {
       case GameMode.TIME_ATTACK:
-        return 'TIME ATTACK';
+        return 'Time Attack';
       case GameMode.PUZZLE:
-        return 'PUZZLE';
+        return 'Puzzle';
       case GameMode.INFINITE:
-        return 'INFINITE';
+        return 'Infinite';
     }
   }
 }
@@ -459,7 +459,7 @@ Widget build(BuildContext context) {
                 items: GameMode.values.map((mode) {
                   return DropdownMenuItem(
                     value: mode,
-                    child: Text(mode.toString().split('.').last),
+                    child: Text(mode.displayName),
                   );
                 }).toList(),
               ),
