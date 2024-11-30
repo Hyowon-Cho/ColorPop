@@ -38,7 +38,18 @@ enum Difficulty {
   NORMAL,  
   HARD
 }
-
+extension DifficultyExtension on Difficulty {
+  String get displayName {
+    switch (this) {
+      case Difficulty.EASY:
+        return 'Easy';
+      case Difficulty.NORMAL:
+        return 'Normal';
+      case Difficulty.HARD:
+        return 'Hard';
+    }
+  }
+}
 
 
 class _ColorPopGameState extends State<ColorPopGame> with TickerProviderStateMixin {
@@ -481,7 +492,7 @@ Widget build(BuildContext context) {
                 items: Difficulty.values.map((difficulty) {
                   return DropdownMenuItem(
                     value: difficulty,
-                    child: Text(difficulty.toString().split('.').last),
+                    child: Text(difficulty.displayName),
                   );
                 }).toList(),
               ),
@@ -516,7 +527,7 @@ Widget build(BuildContext context) {
                     SizedBox(height: 16),  
                     
                     Text(
-                      'Difficulty: ${currentDifficulty.toString().split('.').last}',
+                      'Difficulty: ${currentDifficulty.displayName}',
                       style: TextStyle(fontSize: 20),
                     ),
                     
