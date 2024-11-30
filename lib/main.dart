@@ -66,6 +66,10 @@ class _ColorPopGameState extends State<ColorPopGame> with TickerProviderStateMix
   int comboTimeRemaining = comboTimeLimit;
   int movesLeft = 30;  
 
+
+  ThemeMode themeMode = ThemeMode.light;
+  
+
   GameMode currentMode = GameMode.TIME_ATTACK;
   Difficulty currentDifficulty = Difficulty.NORMAL;
   
@@ -367,6 +371,14 @@ class _ColorPopGameState extends State<ColorPopGame> with TickerProviderStateMix
       initializeBoard();
     });
   }
+
+
+  void toggleTheme() {
+    setState(() {
+      themeMode = themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
+    });
+  }
+
   void updateScore(int baseScore) {
     setState(() {
       if (currentMode == GameMode.INFINITE) {
