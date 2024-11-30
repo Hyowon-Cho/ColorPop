@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
+import 'package:audioplayers/audioplayers.dart';
 import 'dart:async';
 
 void main() {
@@ -65,6 +66,11 @@ class _ColorPopGameState extends State<ColorPopGame> with TickerProviderStateMix
   static const int comboTimeLimit = 5;
   int comboTimeRemaining = comboTimeLimit;
   int movesLeft = 30;  
+
+  final AudioPlayer bgmPlayer = AudioPlayer();
+  final AudioPlayer effectPlayer = AudioPlayer();
+  final AudioPlayer comboPlayer = AudioPlayer();
+  bool isSoundEnabled = true;
 
 
   ThemeMode themeMode = ThemeMode.light;
@@ -143,6 +149,9 @@ class _ColorPopGameState extends State<ColorPopGame> with TickerProviderStateMix
     
     initializeBoard();
     startTimer();
+
+    bgmPlayer.setReleaseMode(ReleaseMode.loop);
+    playBGM();
   }
   void initializeBoard() {
     final random = Random();
@@ -185,6 +194,12 @@ class _ColorPopGameState extends State<ColorPopGame> with TickerProviderStateMix
 
   void popBlocks(List<List<int>> blocks) {
     if (blocks.length < 2) return;
+
+    playPopSound();
+
+    if (comboCount >= 2) {
+      playComboSound();
+    }
 
     if (currentMode == GameMode.PUZZLE) {
       if (movesLeft <= 0) return;  
@@ -286,6 +301,21 @@ class _ColorPopGameState extends State<ColorPopGame> with TickerProviderStateMix
     });
   }
 
+  void playBGM() async {
+    if (!isSoundEnabled) return;
+    await bgmPlayer.play(AssetSource('audio/bgm.mp3'));
+  }
+
+  void playPopSound() async {
+    if (!isSoundEnabled) return;
+    await effectPlayer.play(AssetSource('audio/pop.mp3'));
+  }
+
+  void playComboSound() async {
+    if (!isSoundEnabled) return;
+    await comboPlayer.play(AssetSource('audio/combo.mp3'));
+  }
+
   void resetCombo() {
     setState(() {
       comboCount = 0;
@@ -374,10 +404,12 @@ class _ColorPopGameState extends State<ColorPopGame> with TickerProviderStateMix
 
 
   void toggleTheme() {
-    setState(() {
-      themeMode = themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
-    });
-  }
+  setState(() {
+    themeMode = themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
+  });
+}
+
+
 
   void updateScore(int baseScore) {
     setState(() {
@@ -396,6 +428,11 @@ class _ColorPopGameState extends State<ColorPopGame> with TickerProviderStateMix
     comboTimer?.cancel();
     popAnimationController.dispose();
     fallAnimationController.dispose();
+    super.dispose();
+
+    bgmPlayer.dispose();
+    effectPlayer.dispose();
+    comboPlayer.dispose();
     super.dispose();
   }
 
@@ -451,7 +488,7 @@ Widget build(BuildContext context) {
         ],
       ),
     ),
-    endDrawer: Drawer(
+      endDrawer: Drawer(
       child: SafeArea(
         child: Column(
           children: [
@@ -507,6 +544,26 @@ Widget build(BuildContext context) {
                     child: Text(difficulty.displayName),
                   );
                 }).toList(),
+              ),
+            ),
+            const Divider(),  // 여기에 구분선 추가
+            ListTile(
+              title: const Text('Sound'),
+              subtitle: const Text('Toggle sound effects'),
+              trailing: IconButton(
+                icon: Icon(
+                  isSoundEnabled ? Icons.volume_up : Icons.volume_off,
+                ),
+                onPressed: () {
+                  setState(() {
+                    isSoundEnabled = !isSoundEnabled;
+                    if (isSoundEnabled) {
+                      playBGM();
+                    } else {
+                      bgmPlayer.stop();
+                    }
+                  });
+                },
               ),
             ),
             const Divider(),
